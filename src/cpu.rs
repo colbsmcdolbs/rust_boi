@@ -1,3 +1,5 @@
+use std::ops::{Shl, Shr};
+
 pub enum Register {
     AF,
     BC,
@@ -85,6 +87,323 @@ impl Cpu {
             Flag::C => { self.cf = value }
         }
     }
+
+    ////////////////////////////////////////////////////////////
+    /// Implemented Instructions
+    ////////////////////////////////////////////////////////////
+    
+    // ADC A,r8
+    // ADC A,[HL]
+    // ADC a,n8
+    fn adc(& mut self, value: u8) -> u8 {
+        let a_with_carry: u8 = self.a + (self.cf as u8);
+        let (result, overflow) = a_with_carry.overflowing_add(value);
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, add_half_carry(a_with_carry, value, self.cf as u8));
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // ADD A,r8
+    // ADD A,[HL]
+    // ADD A,n8
+    fn add_8(& mut self, value: u8) -> u8 {
+        let (result, overflow) = self.a.overflowing_add(value);
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, add_half_carry(self.a, value, 0));
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // AND A,r8
+    // AND A,[HL]
+    // AND A,n8
+    // TODO: Should this set the A register??
+    fn and(& mut self, value: u8) {
+        let result: u8 = self.a & value;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, true);
+        self.set_flag(Flag::C, false);
+    }
+
+    // CP A,r8
+    // CP A,[HL]
+    // CP A,n8
+    fn cp(& mut self, value: u8) {
+        let result: u8 = self.a - value;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, true);
+        self.set_flag(Flag::H, sub_half_carry(self.a, value, 0));
+        self.set_flag(Flag::C, value > self.a);
+    }
+
+    // DEC r8
+    // DEC [HL]
+    fn dec(& mut self, value: u8) -> u8 {
+        let result: u8 = value - 1;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, true);
+        self.set_flag(Flag::H, sub_half_carry(value, 1, 0));
+
+        result
+    }
+
+    // INC r8
+    // INC [HL]
+    fn inc(& mut self, value: u8) -> u8 {
+        let result: u8 = value + 1;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, add_half_carry(value, 1, 0));
+
+        result
+    }
+
+    // OR A,r8
+    // OR A,[HL]
+    // OR A, n8
+    fn or(& mut self, value: u8) -> u8 {
+        let result: u8 = self.a | value;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, false);
+
+        result
+    }
+
+    // SBC A,r8
+    // SBC A,[HL]
+    // SBC A,n8
+    fn sbc(& mut self, value: u8) {
+
+    }
+
+    // SUB A,r8
+    // SUB A,[HL]
+    // SUB A,n8
+    fn sub(& mut self, value: u8) -> u8 {
+        let result: u8 = self.a - value;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, true);
+        self.set_flag(Flag::H, sub_half_carry(self.a, value, 0));
+        self.set_flag(Flag::C, value > self.a);
+
+        result
+    }
+
+    // XOR A,r8
+    // XOR A,[HL]
+    // XOR A,n8
+    fn xor(& mut self, value: u8) -> u8 {
+        let result: u8 = self.a ^ value;
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, false);
+
+        result
+    }
+
+    // ADD HL,r16
+    // ADD HL,SP
+    fn add_16(& mut self, value: u16) -> u16 {
+        let (result, overflow) = self.get_16_register(Register::HL).overflowing_add(value);
+
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, add_u16_half_carry(self.get_16_register(Register::HL), value));
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // DEC r16
+    fn dec_16(& mut self, value: u16) -> u16 {
+        value - 1
+    }
+
+    // INC r16
+    fn inc_16(& mut self, value: u16) -> u16 {
+        value + 1
+    }
+
+    // BIT u3,r8
+    // BIT u3,[HL]
+    fn bit(& mut self, value: u8, bit: usize) {
+        self.set_flag(Flag::Z, ((value >> bit) & 1) == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, true);
+    }
+
+    // RES u3,r8
+    // RES u3, [HL]
+    fn res(& self, value: u8, bit: usize) -> u8 {
+        let mask: u8 = 1 << bit;
+        value ^ mask
+    }
+
+    // SET u3,r8
+    // SET u3,[HL]
+    fn set(& self, value: u8, bit: usize) -> u8 {
+        let mask: u8 = 1 << bit;
+        value | mask
+    }
+
+    // SWAP r8
+    // SWAP [HL]
+    fn swap(& self, value: u8) -> u8 {
+        value.rotate_left(4)
+    }
+
+    // RL r8
+    // RL [HL]
+    // RLA
+    fn rl(& mut self, value: u8, is_rla: bool) -> u8 {
+        let overflow: bool = (value >> 7) == 1;
+        let mut result: u8 = value.shl(1);
+
+        if self.cf {
+            result = result | 1;
+        }
+
+        self.set_flag(Flag::Z, !is_rla && result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // RLC r8
+    // RCL [HL]
+    // RLCA
+    fn rlc(& mut self, value: u8, is_rlca: bool) -> u8 {
+        let overflow: bool = (value >> 7) == 1;
+        let mut result: u8 = value.shl(1);
+
+        if overflow {
+            result = result | 1;
+        }
+
+        self.set_flag(Flag::Z, !is_rlca && result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // RR r8
+    // RR [HL]
+    // RRA
+    fn rr(& mut self, value: u8, is_rr: bool) -> u8 {
+        let overflow: bool = (value & 1) == 1;
+        let mut result: u8 = value.shr(1);
+
+        if self.cf {
+            result = result | 0x80;
+        }
+
+        self.set_flag(Flag::Z, !is_rr && result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // RRC r8
+    // RRC [HL]
+    // RRCA
+    fn rrc(& mut self, value: u8, is_rrca: bool) -> u8 {
+        let overflow: bool = (value & 1) == 1;
+        let mut result: u8 = value.shr(1);
+
+        if overflow {
+            result = result | 0x80;
+        }
+
+        self.set_flag(Flag::Z, !is_rrca && result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // SLA r8
+    // SLA [HL]
+    fn sla(& mut self, value: u8) -> u8 {
+        let overflow: bool = (value >> 7) == 1;
+        let result: u8 = value.shl(1);
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // SRA r8
+    // SRA [HL]
+    fn sra(& mut self, value: u8) -> u8 {
+        let msb: bool = (value >> 7) == 1;
+        let overflow: bool = (value & 1) == 1;
+        let mut result: u8 = value.shr(1);
+
+        if msb {
+            result = result | 0x80;
+        }
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+
+    // SRL r8
+    // SRL [HL]
+    fn srl(& mut self, value: u8) -> u8 {
+        let overflow: bool = (value & 1) == 1;
+        let result: u8 = value.shr(1);
+
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, false);
+        self.set_flag(Flag::H, false);
+        self.set_flag(Flag::C, overflow);
+
+        result
+    }
+}
+
+// Utils
+fn add_half_carry(a: u8, b: u8, c: u8) -> bool {
+    (((a & 0xF) + (b & 0xF) + (c & 0xF)) & 0x10) == 0x10
+}
+
+fn add_u16_half_carry(a: u16, b: u16) -> bool {
+    ((a & 0xFFF) + (b & 0xFFF) & 0x1000) == 0x1000
+}
+
+fn sub_half_carry(a: u8, b: u8, c: u8) -> bool {
+    ((a & 0xF) - (b & 0xF) - (c & 0xF)) < 0
 }
 
 #[cfg(test)]
@@ -128,5 +447,36 @@ mod cpu_tests {
         assert!(cpu.nf == false);
         assert!(cpu.hf == false);
         assert!(cpu.cf == false);
+    }
+
+    #[test]
+    fn res_correctly_turns_bit_to_zero() {
+        let cpu = Cpu::new();
+        let result: u8 = cpu.res(0xFF, 5);
+        assert!(result == 0b1101_1111)
+    }
+
+    #[test]
+    fn set_correctly_turns_bit_to_one() {
+        let cpu = Cpu::new();
+        let result: u8 = cpu.res(0x00, 5);
+        assert!(result == 0b0010_0000)
+    }
+
+    #[test]
+    fn swap_correctly_rotates_byte() {
+        let cpu = Cpu::new();
+        let result: u8 = cpu.swap(0x0F);
+        assert!(result == 0xF0)
+    }
+
+    #[test]
+    fn temp_test() {
+        let temp: u8 = 0xFF;
+        let overflow: bool = (temp >> 7) == 1;
+        assert!(overflow);
+
+        let r_overflow: bool = (temp & 1) == 1;
+        assert!(r_overflow);
     }
 }
