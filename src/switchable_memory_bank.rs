@@ -50,5 +50,6 @@ mod switchable_memory_bank_tests {
         let mut switch_bank = SwitchableMemoryBank::new(2, 4096);
         switch_bank.set_bank(2);
         switch_bank.get_value(0);
+        switch_bank.set_value(0, 0);
     }
 }
