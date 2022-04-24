@@ -1,24 +1,29 @@
 use std::ops::{Shl, Shr};
 
+use crate::memory_map::MemoryMap;
+
 pub enum Register {
     AF,
     BC,
     DE,
-    HL
+    HL,
 }
 
 pub enum Flag {
     Z,
     N,
     H,
-    C
+    C,
 }
 
-pub (crate) struct Cpu {
+pub(crate) struct Cpu {
     a: u8,
-    b: u8, c: u8,
-    d: u8, e: u8,
-    h: u8, l: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+    e: u8,
+    h: u8,
+    l: u8,
     sp: usize,
     pc: usize,
     zf: bool, // Zero Flag
@@ -31,31 +36,35 @@ impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
             a: 0,
-            b: 0, c: 0,
-            d: 0, e: 0,
-            h: 0, l: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
+            h: 0,
+            l: 0,
             sp: 0,
             pc: 0,
             zf: false,
             nf: false,
             hf: false,
-            cf: false
+            cf: false,
         }
     }
 
-    pub fn get_16_register(& self, register: Register) -> u16 {
+    pub fn get_16_register(&self, register: Register) -> u16 {
         match register {
             Register::AF => {
-                let f: u8 = ((self.zf as u8) << 7) | ((self.nf as u8) << 6) | ((self.hf as u8) << 5) | ((self.cf as u8) << 4);
+                let f: u8 =
+                    ((self.zf as u8) << 7) | ((self.nf as u8) << 6) | ((self.hf as u8) << 5) | ((self.cf as u8) << 4);
                 ((self.a as u16) << 8) | f as u16
-            },
-            Register::BC => { ((self.b as u16) << 8) | self.c as u16 },
-            Register::DE => { ((self.d as u16) << 8) | self.e as u16 },
-            Register::HL => { ((self.h as u16) << 8) | self.l as u16 },
+            }
+            Register::BC => ((self.b as u16) << 8) | self.c as u16,
+            Register::DE => ((self.d as u16) << 8) | self.e as u16,
+            Register::HL => ((self.h as u16) << 8) | self.l as u16,
         }
     }
 
-    pub fn set_16_register(& mut self, register: Register, value: u16) {
+    pub fn set_16_register(&mut self, register: Register, value: u16) {
         match register {
             Register::AF => {
                 self.a = (value >> 8) as u8;
@@ -63,15 +72,15 @@ impl Cpu {
                 self.nf = (((value & 0b01000000) as u8) >> 6) != 0;
                 self.hf = (((value & 0b00100000) as u8) >> 5) != 0;
                 self.cf = (((value & 0b00010000) as u8) >> 4) != 0;
-            },
+            }
             Register::BC => {
                 self.b = (value >> 8) as u8;
                 self.c = (value & 0x00FF) as u8;
-            },
+            }
             Register::DE => {
                 self.d = (value >> 8) as u8;
                 self.e = (value & 0x00FF) as u8;
-            },
+            }
             Register::HL => {
                 self.h = (value >> 8) as u8;
                 self.l = (value & 0x00FF) as u8;
@@ -79,38 +88,84 @@ impl Cpu {
         }
     }
 
-    pub fn set_flag(& mut self, flag: Flag, value: bool) {
-        match flag {
-            Flag::Z => { self.zf = value },
-            Flag::N => { self.nf = value },
-            Flag::H => { self.hf = value },
-            Flag::C => { self.cf = value }
+    pub fn execute(&mut self, mut mem_map: MemoryMap) {
+        let opcode: u8 = mem_map.get(self.get_pc());
+        match opcode {
+            0x00 => {} // NOP
+            0x01 => {
+                // LD BC,u16
+                let value: u16 = self.get_pc_u16(mem_map);
+                self.set_16_register(Register::BC, value);
+            }
+            0x02 => {
+                // LD (BC),A
+                mem_map.set(self.get_16_register(Register::BC) as usize, self.a)
+            }
+            0x03 => {
+                // INC BC
+                self.set_16_register(Register::BC, self.inc_16(self.get_16_register(Register::BC)))
+            }
+            0x04 => {
+                // INC B
+                self.b = self.inc(self.b)
+            }
+            0x05 => {
+                // DEC B
+                self.b = self.dec(self.b)
+            }
+            0x06 => {
+                // LD B, u8
+                self.b = mem_map.get(self.get_pc());
+            }
+            0x07 => panic!("Instruction not implemented!"),
+            _ => panic!("Instruction not implemented!"),
         }
+    }
+
+    pub fn set_flag(&mut self, flag: Flag, value: bool) {
+        match flag {
+            Flag::Z => self.zf = value,
+            Flag::N => self.nf = value,
+            Flag::H => self.hf = value,
+            Flag::C => self.cf = value,
+        }
+    }
+
+    fn get_pc(&mut self) -> usize {
+        let original: usize = self.pc;
+        self.pc = self.pc + 1;
+        original
+    }
+
+    fn get_pc_u16(&mut self, mut mem_map: MemoryMap) -> u16 {
+        let lower: u8 = mem_map.get(self.get_pc());
+        let upper: u8 = mem_map.get(self.get_pc());
+        ((upper as u16) << 8) | lower as u16
     }
 
     ////////////////////////////////////////////////////////////
     /// Implemented Instructions
     ////////////////////////////////////////////////////////////
-    
+
     // ADC A,r8
     // ADC A,[HL]
     // ADC a,n8
-    fn adc(& mut self, value: u8) -> u8 {
-        let a_with_carry: u8 = self.a + (self.cf as u8);
-        let (result, overflow) = a_with_carry.overflowing_add(value);
+    fn adc(&mut self, value: u8) {
+        let cf: u8 = self.cf as u8;
+        let result = self.a.wrapping_add(value).wrapping_add(cf);
 
         self.set_flag(Flag::Z, result == 0);
         self.set_flag(Flag::N, false);
-        self.set_flag(Flag::H, add_half_carry(a_with_carry, value, self.cf as u8));
-        self.set_flag(Flag::C, overflow);
+        self.set_flag(Flag::H, add_half_carry(self.a, value, cf as u8));
+        self.set_flag(Flag::C, (self.a as u16) + (value as u16) + (cf as u16) > 0xFF);
 
-        result
+        self.a = result;
     }
 
     // ADD A,r8
     // ADD A,[HL]
     // ADD A,n8
-    fn add_8(& mut self, value: u8) -> u8 {
+    fn add_8(&mut self, value: u8) {
         let (result, overflow) = self.a.overflowing_add(value);
 
         self.set_flag(Flag::Z, result == 0);
@@ -118,26 +173,27 @@ impl Cpu {
         self.set_flag(Flag::H, add_half_carry(self.a, value, 0));
         self.set_flag(Flag::C, overflow);
 
-        result
+        self.a = result;
     }
 
     // AND A,r8
     // AND A,[HL]
     // AND A,n8
-    // TODO: Should this set the A register??
-    fn and(& mut self, value: u8) {
+    fn and(&mut self, value: u8) {
         let result: u8 = self.a & value;
 
         self.set_flag(Flag::Z, result == 0);
         self.set_flag(Flag::N, false);
         self.set_flag(Flag::H, true);
         self.set_flag(Flag::C, false);
+
+        self.a = result;
     }
 
     // CP A,r8
     // CP A,[HL]
     // CP A,n8
-    fn cp(& mut self, value: u8) {
+    fn cp(&mut self, value: u8) {
         let result: u8 = self.a - value;
 
         self.set_flag(Flag::Z, result == 0);
@@ -148,7 +204,7 @@ impl Cpu {
 
     // DEC r8
     // DEC [HL]
-    fn dec(& mut self, value: u8) -> u8 {
+    fn dec(&mut self, value: u8) -> u8 {
         let result: u8 = value - 1;
 
         self.set_flag(Flag::Z, result == 0);
@@ -160,7 +216,7 @@ impl Cpu {
 
     // INC r8
     // INC [HL]
-    fn inc(& mut self, value: u8) -> u8 {
+    fn inc(&mut self, value: u8) -> u8 {
         let result: u8 = value + 1;
 
         self.set_flag(Flag::Z, result == 0);
@@ -173,7 +229,7 @@ impl Cpu {
     // OR A,r8
     // OR A,[HL]
     // OR A, n8
-    fn or(& mut self, value: u8) -> u8 {
+    fn or(&mut self, value: u8) {
         let result: u8 = self.a | value;
 
         self.set_flag(Flag::Z, result == 0);
@@ -181,34 +237,42 @@ impl Cpu {
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::C, false);
 
-        result
+        self.a = result;
     }
 
     // SBC A,r8
     // SBC A,[HL]
     // SBC A,n8
-    fn sbc(& mut self, value: u8) {
+    fn sbc(&mut self, value: u8) {
+        let cf: u8 = self.cf as u8;
+        let result = self.a.wrapping_sub(value).wrapping_sub(cf);
 
+        self.set_flag(Flag::Z, result == 0);
+        self.set_flag(Flag::N, true);
+        self.set_flag(Flag::H, (self.a & 0x0F) < (value & 0x0F) + cf);
+        self.set_flag(Flag::C, (self.a as u16) < (value as u16) + (cf as u16));
+
+        self.a = result;
     }
 
     // SUB A,r8
     // SUB A,[HL]
     // SUB A,n8
-    fn sub(& mut self, value: u8) -> u8 {
-        let result: u8 = self.a - value;
+    fn sub(&mut self, value: u8) {
+        let result: u8 = self.a.wrapping_sub(value);
 
         self.set_flag(Flag::Z, result == 0);
         self.set_flag(Flag::N, true);
-        self.set_flag(Flag::H, sub_half_carry(self.a, value, 0));
+        self.set_flag(Flag::H, (self.a & 0x0F) < (value & 0x0F));
         self.set_flag(Flag::C, value > self.a);
 
-        result
+        self.a = result;
     }
 
     // XOR A,r8
     // XOR A,[HL]
     // XOR A,n8
-    fn xor(& mut self, value: u8) -> u8 {
+    fn xor(&mut self, value: u8) {
         let result: u8 = self.a ^ value;
 
         self.set_flag(Flag::Z, result == 0);
@@ -216,34 +280,34 @@ impl Cpu {
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::C, false);
 
-        result
+        self.a = result;
     }
 
     // ADD HL,r16
     // ADD HL,SP
-    fn add_16(& mut self, value: u16) -> u16 {
+    fn add_hl(&mut self, value: u16) {
         let (result, overflow) = self.get_16_register(Register::HL).overflowing_add(value);
 
         self.set_flag(Flag::N, false);
         self.set_flag(Flag::H, add_u16_half_carry(self.get_16_register(Register::HL), value));
         self.set_flag(Flag::C, overflow);
 
-        result
+        self.set_16_register(Register::HL, result);
     }
 
     // DEC r16
-    fn dec_16(& mut self, value: u16) -> u16 {
+    fn dec_16(&self, value: u16) -> u16 {
         value - 1
     }
 
     // INC r16
-    fn inc_16(& mut self, value: u16) -> u16 {
+    fn inc_16(&self, value: u16) -> u16 {
         value + 1
     }
 
     // BIT u3,r8
     // BIT u3,[HL]
-    fn bit(& mut self, value: u8, bit: usize) {
+    fn bit(&mut self, value: u8, bit: usize) {
         self.set_flag(Flag::Z, ((value >> bit) & 1) == 0);
         self.set_flag(Flag::N, false);
         self.set_flag(Flag::H, true);
@@ -251,28 +315,28 @@ impl Cpu {
 
     // RES u3,r8
     // RES u3, [HL]
-    fn res(& self, value: u8, bit: usize) -> u8 {
+    fn res(&self, value: u8, bit: usize) -> u8 {
         let mask: u8 = 1 << bit;
         value ^ mask
     }
 
     // SET u3,r8
     // SET u3,[HL]
-    fn set(& self, value: u8, bit: usize) -> u8 {
+    fn set(&self, value: u8, bit: usize) -> u8 {
         let mask: u8 = 1 << bit;
         value | mask
     }
 
     // SWAP r8
     // SWAP [HL]
-    fn swap(& self, value: u8) -> u8 {
+    fn swap(&self, value: u8) -> u8 {
         value.rotate_left(4)
     }
 
     // RL r8
     // RL [HL]
     // RLA
-    fn rl(& mut self, value: u8, is_rla: bool) -> u8 {
+    fn rl(&mut self, value: u8, is_rla: bool) -> u8 {
         let overflow: bool = (value >> 7) == 1;
         let mut result: u8 = value.shl(1);
 
@@ -291,7 +355,7 @@ impl Cpu {
     // RLC r8
     // RCL [HL]
     // RLCA
-    fn rlc(& mut self, value: u8, is_rlca: bool) -> u8 {
+    fn rlc(&mut self, value: u8, is_rlca: bool) -> u8 {
         let overflow: bool = (value >> 7) == 1;
         let mut result: u8 = value.shl(1);
 
@@ -310,7 +374,7 @@ impl Cpu {
     // RR r8
     // RR [HL]
     // RRA
-    fn rr(& mut self, value: u8, is_rr: bool) -> u8 {
+    fn rr(&mut self, value: u8, is_rr: bool) -> u8 {
         let overflow: bool = (value & 1) == 1;
         let mut result: u8 = value.shr(1);
 
@@ -329,7 +393,7 @@ impl Cpu {
     // RRC r8
     // RRC [HL]
     // RRCA
-    fn rrc(& mut self, value: u8, is_rrca: bool) -> u8 {
+    fn rrc(&mut self, value: u8, is_rrca: bool) -> u8 {
         let overflow: bool = (value & 1) == 1;
         let mut result: u8 = value.shr(1);
 
@@ -347,7 +411,7 @@ impl Cpu {
 
     // SLA r8
     // SLA [HL]
-    fn sla(& mut self, value: u8) -> u8 {
+    fn sla(&mut self, value: u8) -> u8 {
         let overflow: bool = (value >> 7) == 1;
         let result: u8 = value.shl(1);
 
@@ -361,7 +425,7 @@ impl Cpu {
 
     // SRA r8
     // SRA [HL]
-    fn sra(& mut self, value: u8) -> u8 {
+    fn sra(&mut self, value: u8) -> u8 {
         let msb: bool = (value >> 7) == 1;
         let overflow: bool = (value & 1) == 1;
         let mut result: u8 = value.shr(1);
@@ -380,7 +444,7 @@ impl Cpu {
 
     // SRL r8
     // SRL [HL]
-    fn srl(& mut self, value: u8) -> u8 {
+    fn srl(&mut self, value: u8) -> u8 {
         let overflow: bool = (value & 1) == 1;
         let result: u8 = value.shr(1);
 

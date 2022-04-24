@@ -1,6 +1,6 @@
-pub (crate) struct SwitchableMemoryBank {
+pub(crate) struct SwitchableMemoryBank {
     current_index: usize,
-    banks: Vec<Vec<u8>>
+    banks: Vec<Vec<u8>>,
 }
 
 impl SwitchableMemoryBank {
@@ -8,14 +8,14 @@ impl SwitchableMemoryBank {
         if size < 1 {
             panic!("Must have at least 2 banks to be switchable")
         }
-        
+
         SwitchableMemoryBank {
             current_index: 0,
-            banks: vec![vec![0; bank_size]; size]
+            banks: vec![vec![0; bank_size]; size],
         }
     }
 
-    pub fn get_value(& self, index: usize) -> u8 {
+    pub fn get_value(&self, index: usize) -> u8 {
         self.banks[self.current_index][index]
     }
 
