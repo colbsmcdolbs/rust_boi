@@ -82,6 +82,11 @@ impl MemoryMap {
         }
     }
 
+    pub fn set_u16(&mut self, index: usize, value: u16) {
+        self.set(index, value as u8);
+        self.set(index + 1, (value >> 8) as u8)
+    }
+
     pub fn update_switchable_bank_index(&mut self, bank_index: usize, switchable_bank_type: SwitchableBankType) {
         match switchable_bank_type {
             SwitchableBankType::RomBank0N => {

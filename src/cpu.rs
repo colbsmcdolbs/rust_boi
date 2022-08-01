@@ -92,32 +92,164 @@ impl Cpu {
         let opcode: u8 = mem_map.get(self.get_pc());
         match opcode {
             0x00 => {} // NOP
-            0x01 => {
-                // LD BC,u16
-                let value: u16 = self.get_pc_u16(mem_map);
-                self.set_16_register(Register::BC, value);
+            0x01 => { // LD BC,u16
+                let value: u16 = self.get_pc_u16(&mut mem_map);
+                self.set_16_register(Register::BC, value)
             }
-            0x02 => {
-                // LD (BC),A
+            0x02 => { // LD (BC),A
                 mem_map.set(self.get_16_register(Register::BC) as usize, self.a)
             }
-            0x03 => {
-                // INC BC
+            0x03 => { // INC BC
                 self.set_16_register(Register::BC, self.inc_16(self.get_16_register(Register::BC)))
             }
-            0x04 => {
-                // INC B
+            0x04 => { // INC B
                 self.b = self.inc(self.b)
             }
-            0x05 => {
-                // DEC B
+            0x05 => { // DEC B
                 self.b = self.dec(self.b)
             }
-            0x06 => {
-                // LD B, u8
-                self.b = mem_map.get(self.get_pc());
+            0x06 => { // LD B, u8
+                self.b = mem_map.get(self.get_pc())
             }
-            0x07 => panic!("Instruction not implemented!"),
+            0x07 => panic!("Instruction not implemented! RLCA"),
+            0x08 => { // LD (u16),SP
+                let index: u16 = self.get_pc_u16(&mut mem_map);
+                mem_map.set_u16(index as usize, self.sp as u16)
+            }
+            0x09 => { // ADD HL, BC
+                self.add_hl(self.get_16_register(Register::BC))
+            }
+            0x0A => { // LD A, (BC)
+                self.a = mem_map.get(self.get_16_register(Register::BC) as usize)
+            }
+            0x0B => { // DEC BC (TODO possible micro-bottlneck here)
+                let value: u16 = self.dec_16(self.get_16_register(Register::BC));
+                self.set_16_register(Register::BC, value)
+            }
+            0x0C => { // INC C
+                self.c = self.inc(self.c)
+            }
+            0x0D => { // DEC C
+                self.c = self.dec(self.c)
+            }
+            0x0E => { // LD C, u8
+                self.c = mem_map.get(self.get_pc())
+            }
+            0x0F => { // RRCA
+                panic!("Instruction not implemented! RRCA")
+            }
+            0x10 => { // STOP
+                panic!("Instruction not implemented! STOP")
+            }
+            0x11 => { // LD DE,u16
+                let value: u16 = self.get_pc_u16(&mut mem_map);
+                self.set_16_register(Register::DE, value)
+            }
+            0x12 => { // LD (DE),A
+                mem_map.set(self.get_16_register(Register::DE) as usize, self.a)
+            }
+            0x13 => { // INC DE
+                self.set_16_register(Register::DE, self.inc_16(self.get_16_register(Register::DE)))
+            }
+            0x14 => { // INC D
+                self.d = self.inc(self.d)
+            }
+            0x15 => { // DEC D
+                self.d = self.dec(self.d)
+            }
+            0x16 => { // LD D, u8
+                self.d = mem_map.get(self.get_pc())
+            }
+            0x17 => { // RLA
+                panic!("Instruction not implemented! RLA")
+            }
+            0x18 => {
+                panic!("Instruction not implemented! JR i8")
+            }
+            0x19 => { // ADD HL, DE
+                self.add_hl(self.get_16_register(Register::DE))
+            }
+            0x1A => { // LD A, (DE)
+                self.a = mem_map.get(self.get_16_register(Register::DE) as usize)
+            }
+            0x1B => { // DEC DE (TODO possible micro-bottlneck here)
+                let value: u16 = self.dec_16(self.get_16_register(Register::DE));
+                self.set_16_register(Register::DE, value)
+            }
+            0x1C => { // INC E
+                self.e = self.inc(self.e)
+            }
+            0x1D => { // DEC E
+                self.e = self.dec(self.e)
+            }
+            0x1E => { // LD E, u8
+                self.e = mem_map.get(self.get_pc())
+            }
+            0x1F => { // RRA
+                panic!("Instruction not implemented! RRA")
+            }
+            0x20 => { // JR NZ, i8
+                panic!("Instruction not implemented! JR NZ, i8")
+            }
+            0x21 => { // LD HL,u16
+                let value: u16 = self.get_pc_u16(&mut mem_map);
+                self.set_16_register(Register::HL, value)
+            }
+            0x22 => { // LD (HL+),A
+                mem_map.set((self.get_16_register(Register::HL) + 1) as usize, self.a)
+            }
+            0x23 => { // INC HL
+                self.set_16_register(Register::HL, self.inc_16(self.get_16_register(Register::HL)))
+            }
+            0x24 => { // INC H
+                self.h = self.inc(self.h)
+            }
+            0x25 => { // DEC H
+                self.h = self.dec(self.h)
+            }
+            0x26 => { // LD H, u8
+                self.h = mem_map.get(self.get_pc())
+            }
+            0x27 => { // DAA
+                panic!("Instruction not implemented! DAA")
+            }
+            0x28 => {
+                panic!("Instruction not implemented! JR Z, i8")
+            }
+            0x29 => { // ADD HL, HL
+                self.add_hl(self.get_16_register(Register::HL))
+            }
+            0x2A => { // LD A, (HL+)
+                self.a = mem_map.get((self.get_16_register(Register::HL) + 1) as usize)
+            }
+            0x2B => { // DEC HL (TODO possible micro-bottlneck here)
+                let value: u16 = self.dec_16(self.get_16_register(Register::HL));
+                self.set_16_register(Register::HL, value)
+            }
+            0x2C => { // INC L
+                self.l = self.inc(self.l)
+            }
+            0x2D => { // DEC L
+                self.l = self.dec(self.l)
+            }
+            0x2E => { // LD L, u8
+                self.l = mem_map.get(self.get_pc())
+            }
+            0x2F => { // CPL
+                panic!("Instruction not implemented! CPL")
+            }
+            0x30 => { // JR NC, i8
+                panic!("Instruction not implemented! JR NC, i8")
+            }
+            0x31 => { // LD SP,u16
+                self.sp = self.get_pc_u16(&mut mem_map) as usize
+            }
+            0x32 => { // LD (HL-),A
+                mem_map.set((self.get_16_register(Register::HL) - 1) as usize, self.a)
+            }
+            0x33 => { // INC SP
+                self.sp = self.sp + 1
+            }
             _ => panic!("Instruction not implemented!"),
         }
     }
@@ -137,7 +269,8 @@ impl Cpu {
         original
     }
 
-    fn get_pc_u16(&mut self, mut mem_map: MemoryMap) -> u16 {
+    // TODO - Possibly misleading function name
+    fn get_pc_u16(&mut self, mem_map: &mut MemoryMap) -> u16 {
         let lower: u8 = mem_map.get(self.get_pc());
         let upper: u8 = mem_map.get(self.get_pc());
         ((upper as u16) << 8) | lower as u16
