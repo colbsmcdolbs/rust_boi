@@ -682,11 +682,875 @@ impl Cpu {
             0xBF => { // CP A, A
                 self.cp(self.a)
             }
+            0xC0 => {
+                panic!("Instruction not implemented! RET NZ")
+            }
+            0xC1 => {
+                panic!("Instruction not implemented! POP BC")
+            }
+            0xC2 => {
+                panic!("Instruction not implemented! JP NZ, u16")
+            }
+            0xC3 => {
+                panic!("Instruction not implemented! JP u16")
+            }
+            0xC4 => {
+                panic!("Instruction not implemented! CALL NZ, u16")
+            }
+            0xC5 => {
+                panic!("Instruction not implemented! PUSH BC")
+            }
+            0xC6 => {
+                let value: u8 = mem_map.get(self.get_pc());
+                self.add_8(value)
+            }
+            0xC7 => {
+                panic!("Instruction not implemented! RST 00h")
+            }
+            0xC8 => {
+                panic!("Instruction not implemented! RET Z")
+            }
+            0xC9 => {
+                panic!("Instruction not implemented! RET")
+            }
+            0xCA => {
+                panic!("Instruction not implemented! JP Z, u16")
+            }
+            0xCB => {
+                let opcode: u8 = mem_map.get(self.get_pc());
+                match opcode {
+                    0x00 => { // RLC B
+                        self.b = self.rlc(self.b, false)
+                    }
+                    0x01 => { // RLC C
+                        self.c = self.rlc(self.c, false)
+                    }
+                    0x02 => { // RLC D
+                        self.d = self.rlc(self.d, false)
+                    }
+                    0x03 => { // RLC E 
+                        self.e = self.rlc(self.e, false)
+                    }
+                    0x04 => { // RLC H
+                        self.h = self.rlc(self.h, false)
+                    }
+                    0x05 => { // RLC L
+                        self.l = self.rlc(self.l, false)
+                    }
+                    0x06 => { // RLC (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.rlc(value, false);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x07 => { // RLC A
+                        self.a = self.rlc(self.a, false)
+                    }
+                    0x08 => { // RRC B
+                        self.b = self.rrc(self.b, false)
+                    }
+                    0x09 => { // RRC C
+                        self.c = self.rrc(self.c, false)
+                    }
+                    0x0A => { // RRC D
+                        self.d = self.rrc(self.d, false)
+                    }
+                    0x0B => { // RRC E 
+                        self.e = self.rrc(self.e, false)
+                    }
+                    0x0C => { // RRC H
+                        self.h = self.rrc(self.h, false)
+                    }
+                    0x0D => { // RRC L
+                        self.l = self.rrc(self.l, false)
+                    }
+                    0x0E => { // RRC (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.rrc(value, false);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x0F => { // RRC A
+                        self.a = self.rrc(self.a, false)
+                    }
+                    0x10 => { // RL B
+                        self.b = self.rl(self.b, false)
+                    }
+                    0x11 => { // RL C
+                        self.c = self.rl(self.c, false)
+                    }
+                    0x12 => { // RL D
+                        self.d = self.rl(self.d, false)
+                    }
+                    0x13 => { // RL E 
+                        self.e = self.rl(self.e, false)
+                    }
+                    0x14 => { // RL H
+                        self.h = self.rl(self.h, false)
+                    }
+                    0x15 => { // RL L
+                        self.l = self.rl(self.l, false)
+                    }
+                    0x16 => { // RL (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.rl(value, false);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x17 => { // RL A
+                        self.a = self.rl(self.a, false)
+                    }
+                    0x18 => { // RR B
+                        self.b = self.rr(self.b, false)
+                    }
+                    0x19 => { // RR C
+                        self.c = self.rr(self.c, false)
+                    }
+                    0x1A => { // RR D
+                        self.d = self.rr(self.d, false)
+                    }
+                    0x1B => { // RR E 
+                        self.e = self.rr(self.e, false)
+                    }
+                    0x1C => { // RR H
+                        self.h = self.rr(self.h, false)
+                    }
+                    0x1D => { // RR L
+                        self.l = self.rr(self.l, false)
+                    }
+                    0x1E => { // RR (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.rr(value, false);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x1F => { // RR A
+                        self.a = self.rr(self.a, false)
+                    }
+                    0x20 => { // SLA B
+                        self.b = self.sla(self.b)
+                    }
+                    0x21 => { // SLA C
+                        self.c = self.sla(self.c)
+                    }
+                    0x22 => { // SLA D
+                        self.d = self.sla(self.d)
+                    }
+                    0x23 => { // SLA E 
+                        self.e = self.sla(self.e)
+                    }
+                    0x24 => { // SLA H
+                        self.h = self.sla(self.h)
+                    }
+                    0x25 => { // SLA L
+                        self.l = self.sla(self.l)
+                    }
+                    0x26 => { // SLA (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.sla(value);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x27 => { // SLA A
+                        self.a = self.sla(self.a)
+                    }
+                    0x28 => { // SRA B
+                        self.b = self.sra(self.b)
+                    }
+                    0x29 => { // SRA C
+                        self.c = self.sra(self.c)
+                    }
+                    0x2A => { // SRA D
+                        self.d = self.sra(self.d)
+                    }
+                    0x2B => { // SRA E 
+                        self.e = self.sra(self.e)
+                    }
+                    0x2C => { // SRA H
+                        self.h = self.sra(self.h)
+                    }
+                    0x2D => { // SRA L
+                        self.l = self.sra(self.l)
+                    }
+                    0x2E => { // SRA (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.sra(value);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x2F => { // SRA A
+                        self.a = self.sra(self.a)
+                    }
+                    0x30 => { // SWAP B
+                        self.b = self.swap(self.b)
+                    }
+                    0x31 => { // SWAP C
+                        self.c = self.swap(self.c)
+                    }
+                    0x32 => { // SWAP D
+                        self.d = self.swap(self.d)
+                    }
+                    0x33 => { // SWAP E 
+                        self.e = self.swap(self.e)
+                    }
+                    0x34 => { // SWAP H
+                        self.h = self.swap(self.h)
+                    }
+                    0x35 => { // SWAP L
+                        self.l = self.swap(self.l)
+                    }
+                    0x36 => { // SWAP (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.swap(value);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x37 => { // SWAP A
+                        self.a = self.swap(self.a)
+                    }
+                    0x38 => { // SRL B
+                        self.b = self.srl(self.b)
+                    }
+                    0x39 => { // SRL C
+                        self.c = self.srl(self.c)
+                    }
+                    0x3A => { // SRL D
+                        self.d = self.srl(self.d)
+                    }
+                    0x3B => { // SRL E 
+                        self.e = self.srl(self.e)
+                    }
+                    0x3C => { // SRL H
+                        self.h = self.srl(self.h)
+                    }
+                    0x3D => { // SRL L
+                        self.l = self.srl(self.l)
+                    }
+                    0x3E => { // SRL (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.srl(value);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x3F => { // SRL A
+                        self.a = self.srl(self.a)
+                    }
+                    0x40 => { // BIT 0, B
+                        self.bit(self.b, 0)
+                    }
+                    0x41 => { // BIT 0, C
+                        self.bit(self.c, 0)
+                    }
+                    0x42 => { // BIT 0, D
+                        self.bit(self.d, 0)
+                    }
+                    0x43 => { // BIT 0, E 
+                        self.bit(self.e, 0)
+                    }
+                    0x44 => { // BIT 0, H
+                        self.bit(self.h, 0)
+                    }
+                    0x45 => { // BIT 0, L
+                        self.bit(self.l, 0)
+                    }
+                    0x46 => { // BIT 0, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 0)
+                    }
+                    0x47 => { // BIT 0, A
+                        self.bit(self.a, 0)
+                    }
+                    0x48 => { // BIT 1, B
+                        self.bit(self.b, 1)
+                    }
+                    0x49 => { // BIT 1, C
+                        self.bit(self.c, 1)
+                    }
+                    0x4A => { // BIT 1, D
+                        self.bit(self.d, 1)
+                    }
+                    0x4B => { // BIT 1, E 
+                        self.bit(self.e, 1)
+                    }
+                    0x4C => { // BIT 1, H
+                        self.bit(self.h, 1)
+                    }
+                    0x4D => { // BIT 1, L
+                        self.bit(self.l, 1)
+                    }
+                    0x4E => { // BIT 1, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 1)
+                    }
+                    0x4F => { // BIT 1, A
+                        self.bit(self.a, 1)
+                    }
+                    0x50 => { // BIT 2, B
+                        self.bit(self.b, 2)
+                    }
+                    0x51 => { // BIT 2, C
+                        self.bit(self.c, 2)
+                    }
+                    0x52 => { // BIT 2, D
+                        self.bit(self.d, 2)
+                    }
+                    0x53 => { // BIT 2, E 
+                        self.bit(self.e, 2)
+                    }
+                    0x54 => { // BIT 2, H
+                        self.bit(self.h, 2)
+                    }
+                    0x55 => { // BIT 2, L
+                        self.bit(self.l, 2)
+                    }
+                    0x56 => { // BIT 2, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 2)
+                    }
+                    0x57 => { // BIT 2, A
+                        self.bit(self.a, 2)
+                    }
+                    0x58 => { // BIT 3, B
+                        self.bit(self.b, 3)
+                    }
+                    0x59 => { // BIT 3, C
+                        self.bit(self.c, 3)
+                    }
+                    0x5A => { // BIT 3, D
+                        self.bit(self.d, 3)
+                    }
+                    0x5B => { // BIT 3, E 
+                        self.bit(self.e, 3)
+                    }
+                    0x5C => { // BIT 3, H
+                        self.bit(self.h, 3)
+                    }
+                    0x5D => { // BIT 3, L
+                        self.bit(self.l, 3)
+                    }
+                    0x5E => { // BIT 3, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 3)
+                    }
+                    0x5F => { // BIT 3, A
+                        self.bit(self.a, 3)
+                    }
+                    0x60 => { // BIT 4, B
+                        self.bit(self.b, 4)
+                    }
+                    0x61 => { // BIT 4, C
+                        self.bit(self.c, 4)
+                    }
+                    0x62 => { // BIT 4, D
+                        self.bit(self.d, 4)
+                    }
+                    0x63 => { // BIT 4, E 
+                        self.bit(self.e, 4)
+                    }
+                    0x64 => { // BIT 4, H
+                        self.bit(self.h, 4)
+                    }
+                    0x65 => { // BIT 4, L
+                        self.bit(self.l, 4)
+                    }
+                    0x66 => { // BIT 4, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 4)
+                    }
+                    0x67 => { // BIT 4, A
+                        self.bit(self.a, 4)
+                    }
+                    0x68 => { // BIT 5, B
+                        self.bit(self.b, 5)
+                    }
+                    0x69 => { // BIT 5, C
+                        self.bit(self.c, 5)
+                    }
+                    0x6A => { // BIT 5, D
+                        self.bit(self.d, 5)
+                    }
+                    0x6B => { // BIT 5, E 
+                        self.bit(self.e, 5)
+                    }
+                    0x6C => { // BIT 5, H
+                        self.bit(self.h, 5)
+                    }
+                    0x6D => { // BIT 5, L
+                        self.bit(self.l, 5)
+                    }
+                    0x6E => { // BIT 5, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 5)
+                    }
+                    0x6F => { // BIT 5, A
+                        self.bit(self.a, 5)
+                    }
+                    0x70 => { // BIT 6, B
+                        self.bit(self.b, 6)
+                    }
+                    0x71 => { // BIT 6, C
+                        self.bit(self.c, 6)
+                    }
+                    0x72 => { // BIT 6, D
+                        self.bit(self.d, 6)
+                    }
+                    0x73 => { // BIT 6, E 
+                        self.bit(self.e, 6)
+                    }
+                    0x74 => { // BIT 6, H
+                        self.bit(self.h, 6)
+                    }
+                    0x75 => { // BIT 6, L
+                        self.bit(self.l, 6)
+                    }
+                    0x76 => { // BIT 6, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 6)
+                    }
+                    0x77 => { // BIT 6, A
+                        self.bit(self.a, 6)
+                    }
+                    0x78 => { // BIT 7, B
+                        self.bit(self.b, 7)
+                    }
+                    0x79 => { // BIT 7, C
+                        self.bit(self.c, 7)
+                    }
+                    0x7A => { // BIT 7, D
+                        self.bit(self.d, 7)
+                    }
+                    0x7B => { // BIT 7, E 
+                        self.bit(self.e, 7)
+                    }
+                    0x7C => { // BIT 7, H
+                        self.bit(self.h, 7)
+                    }
+                    0x7D => { // BIT 7, L
+                        self.bit(self.l, 7)
+                    }
+                    0x7E => { // BIT 7, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        self.bit(value, 7)
+                    }
+                    0x7F => { // BIT 7, A
+                        self.bit(self.a, 7)
+                    }
+                    0x80 => { // RES 0, B
+                        self.b = self.res(self.b, 0)
+                    }
+                    0x81 => { // RES 0, C
+                        self.c = self.res(self.c, 0)
+                    }
+                    0x82 => { // RES 0, D
+                        self.d = self.res(self.d, 0)
+                    }
+                    0x83 => { // RES 0, E 
+                        self.e = self.res(self.e, 0)
+                    }
+                    0x84 => { // RES 0, H
+                        self.h = self.res(self.h, 0)
+                    }
+                    0x85 => { // RES 0, L
+                        self.l = self.res(self.l, 0)
+                    }
+                    0x86 => { // RES 0, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 0);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x87 => { // RES 0, A
+                        self.a = self.res(self.a, 0)
+                    }
+                    0x88 => { // RES 1, B
+                        self.b = self.res(self.b, 1)
+                    }
+                    0x89 => { // RES 1, C
+                        self.c = self.res(self.c, 1)
+                    }
+                    0x8A => { // RES 1, D
+                        self.d = self.res(self.d, 1)
+                    }
+                    0x8B => { // RES 1, E 
+                        self.e = self.res(self.e, 1)
+                    }
+                    0x8C => { // RES 1, H
+                        self.h = self.res(self.h, 1)
+                    }
+                    0x8D => { // RES 1, L
+                        self.l = self.res(self.l, 1)
+                    }
+                    0x8E => { // RES 1, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 1);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x8F => { // RES 1, A
+                        self.a = self.res(self.a, 1)
+                    }
+                    0x90 => { // RES 2, B
+                        self.b = self.res(self.b, 2)
+                    }
+                    0x91 => { // RES 2, C
+                        self.c = self.res(self.c, 2)
+                    }
+                    0x92 => { // RES 2, D
+                        self.d = self.res(self.d, 2)
+                    }
+                    0x93 => { // RES 2, E 
+                        self.e = self.res(self.e, 2)
+                    }
+                    0x94 => { // RES 2, H
+                        self.h = self.res(self.h, 2)
+                    }
+                    0x95 => { // RES 2, L
+                        self.l = self.res(self.l, 2)
+                    }
+                    0x96 => { // RES 2, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 2);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x97 => { // RES 2, A
+                        self.a = self.res(self.a, 2)
+                    }
+                    0x98 => { // RES 3, B
+                        self.b = self.res(self.b, 3)
+                    }
+                    0x99 => { // RES 3, C
+                        self.c = self.res(self.c, 3)
+                    }
+                    0x9A => { // RES 3, D
+                        self.d = self.res(self.d, 3)
+                    }
+                    0x9B => { // RES 3, E 
+                        self.e = self.res(self.e, 3)
+                    }
+                    0x9C => { // RES 3, H
+                        self.h = self.res(self.h, 3)
+                    }
+                    0x9D => { // RES 3, L
+                        self.l = self.res(self.l, 3)
+                    }
+                    0x9E => { // RES 3, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 3);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0x9F => { // RES 3, A
+                        self.a = self.res(self.a, 3)
+                    }
+                    0xA0 => { // RES 4, B
+                        self.b = self.res(self.b, 4)
+                    }
+                    0xA1 => { // RES 4, C
+                        self.c = self.res(self.c, 4)
+                    }
+                    0xA2 => { // RES 4, D
+                        self.d = self.res(self.d, 4)
+                    }
+                    0xA3 => { // RES 4, E 
+                        self.e = self.res(self.e, 4)
+                    }
+                    0xA4 => { // RES 4, H
+                        self.h = self.res(self.h, 4)
+                    }
+                    0xA5 => { // RES 4, L
+                        self.l = self.res(self.l, 4)
+                    }
+                    0xA6 => { // RES 4, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 4);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xA7 => { // RES 4, A
+                        self.a = self.res(self.a, 4)
+                    }
+                    0xA8 => { // RES 5, B
+                        self.b = self.res(self.b, 5)
+                    }
+                    0xA9 => { // RES 5, C
+                        self.c = self.res(self.c, 5)
+                    }
+                    0xAA => { // RES 5, D
+                        self.d = self.res(self.d, 5)
+                    }
+                    0xAB => { // RES 5, E 
+                        self.e = self.res(self.e, 5)
+                    }
+                    0xAC => { // RES 5, H
+                        self.h = self.res(self.h, 5)
+                    }
+                    0xAD => { // RES 5, L
+                        self.l = self.res(self.l, 5)
+                    }
+                    0xAE => { // RES 5, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 5);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xAF => { // RES 5, A
+                        self.a = self.res(self.a, 5)
+                    }
+                    0xB0 => { // RES 6, B
+                        self.b = self.res(self.b, 6)
+                    }
+                    0xB1 => { // RES 6, C
+                        self.c = self.res(self.c, 6)
+                    }
+                    0xB2 => { // RES 6, D
+                        self.d = self.res(self.d, 6)
+                    }
+                    0xB3 => { // RES 6, E 
+                        self.e = self.res(self.e, 6)
+                    }
+                    0xB4 => { // RES 6, H
+                        self.h = self.res(self.h, 6)
+                    }
+                    0xB5 => { // RES 6, L
+                        self.l = self.res(self.l, 6)
+                    }
+                    0xB6 => { // RES 6, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 6);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xB7 => { // RES 6, A
+                        self.a = self.res(self.a, 6)
+                    }
+                    0xB8 => { // RES 7, B
+                        self.b = self.res(self.b, 7)
+                    }
+                    0xB9 => { // RES 7, C
+                        self.c = self.res(self.c, 7)
+                    }
+                    0xBA => { // RES 7, D
+                        self.d = self.res(self.d, 7)
+                    }
+                    0xBB => { // RES 7, E 
+                        self.e = self.res(self.e, 7)
+                    }
+                    0xBC => { // RES 7, H
+                        self.h = self.res(self.h, 7)
+                    }
+                    0xBD => { // RES 7, L
+                        self.l = self.res(self.l, 7)
+                    }
+                    0xBE => { // RES 7, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.res(value, 7);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xBF => { // RES 7, A
+                        self.a = self.res(self.a, 7)
+                    }
+                    0xC0 => { // SET 0, B
+                        self.b = self.set(self.b, 0)
+                    }
+                    0xC1 => { // SET 0, C
+                        self.c = self.set(self.c, 0)
+                    }
+                    0xC2 => { // SET 0, D
+                        self.d = self.set(self.d, 0)
+                    }
+                    0xC3 => { // SET 0, E 
+                        self.e = self.set(self.e, 0)
+                    }
+                    0xC4 => { // SET 0, H
+                        self.h = self.set(self.h, 0)
+                    }
+                    0xC5 => { // SET 0, L
+                        self.l = self.set(self.l, 0)
+                    }
+                    0xC6 => { // SET 0, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 0);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xC7 => { // SET 0, A
+                        self.a = self.set(self.a, 0)
+                    }
+                    0xC8 => { // SET 1, B
+                        self.b = self.set(self.b, 1)
+                    }
+                    0xC9 => { // SET 1, C
+                        self.c = self.set(self.c, 1)
+                    }
+                    0xCA => { // SET 1, D
+                        self.d = self.set(self.d, 1)
+                    }
+                    0xCB => { // SET 1, E 
+                        self.e = self.set(self.e, 1)
+                    }
+                    0xCC => { // SET 1, H
+                        self.h = self.set(self.h, 1)
+                    }
+                    0xCD => { // SET 1, L
+                        self.l = self.set(self.l, 1)
+                    }
+                    0xCE => { // SET 1, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 1);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xCF => { // SET 1, A
+                        self.a = self.set(self.a, 1)
+                    }
+                    0xD0 => { // SET 2, B
+                        self.b = self.set(self.b, 2)
+                    }
+                    0xD1 => { // SET 2, C
+                        self.c = self.set(self.c, 2)
+                    }
+                    0xD2 => { // SET 2, D
+                        self.d = self.set(self.d, 2)
+                    }
+                    0xD3 => { // SET 2, E 
+                        self.e = self.set(self.e, 2)
+                    }
+                    0xD4 => { // SET 2, H
+                        self.h = self.set(self.h, 2)
+                    }
+                    0xD5 => { // SET 2, L
+                        self.l = self.set(self.l, 2)
+                    }
+                    0xD6 => { // SET 2, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 2);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xD7 => { // SET 2, A
+                        self.a = self.set(self.a, 2)
+                    }
+                    0xD8 => { // SET 3, B
+                        self.b = self.set(self.b, 3)
+                    }
+                    0xD9 => { // SET 3, C
+                        self.c = self.set(self.c, 3)
+                    }
+                    0xDA => { // SET 3, D
+                        self.d = self.set(self.d, 3)
+                    }
+                    0xDB => { // SET 3, E 
+                        self.e = self.set(self.e, 3)
+                    }
+                    0xDC => { // SET 3, H
+                        self.h = self.set(self.h, 3)
+                    }
+                    0xDD => { // SET 3, L
+                        self.l = self.set(self.l, 3)
+                    }
+                    0xDE => { // SET 3, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 3);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xDF => { // SET 3, A
+                        self.a = self.set(self.a, 3)
+                    }
+                    0xE0 => { // SET 4, B
+                        self.b = self.set(self.b, 4)
+                    }
+                    0xE1 => { // SET 4, C
+                        self.c = self.set(self.c, 4)
+                    }
+                    0xE2 => { // SET 4, D
+                        self.d = self.set(self.d, 4)
+                    }
+                    0xE3 => { // SET 4, E 
+                        self.e = self.set(self.e, 4)
+                    }
+                    0xE4 => { // SET 4, H
+                        self.h = self.set(self.h, 4)
+                    }
+                    0xE5 => { // SET 4, L
+                        self.l = self.set(self.l, 4)
+                    }
+                    0xE6 => { // SET 4, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 4);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xE7 => { // SET 4, A
+                        self.a = self.set(self.a, 4)
+                    }
+                    0xE8 => { // SET 5, B
+                        self.b = self.set(self.b, 5)
+                    }
+                    0xE9 => { // SET 5, C
+                        self.c = self.set(self.c, 5)
+                    }
+                    0xEA => { // SET 5, D
+                        self.d = self.set(self.d, 5)
+                    }
+                    0xEB => { // SET 5, E 
+                        self.e = self.set(self.e, 5)
+                    }
+                    0xEC => { // SET 5, H
+                        self.h = self.set(self.h, 5)
+                    }
+                    0xED => { // SET 5, L
+                        self.l = self.set(self.l, 5)
+                    }
+                    0xEE => { // SET 5, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 5);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xEF => { // SET 5, A
+                        self.a = self.set(self.a, 5)
+                    }
+                    0xF0 => { // SET 6, B
+                        self.b = self.set(self.b, 6)
+                    }
+                    0xF1 => { // SET 6, C
+                        self.c = self.set(self.c, 6)
+                    }
+                    0xF2 => { // SET 6, D
+                        self.d = self.set(self.d, 6)
+                    }
+                    0xF3 => { // SET 6, E 
+                        self.e = self.set(self.e, 6)
+                    }
+                    0xF4 => { // SET 6, H
+                        self.h = self.set(self.h, 6)
+                    }
+                    0xF5 => { // SET 6, L
+                        self.l = self.set(self.l, 6)
+                    }
+                    0xF6 => { // SET 6, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 6);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xF7 => { // SET 6, A
+                        self.a = self.set(self.a, 6)
+                    }
+                    0xF8 => { // SET 7, B
+                        self.b = self.set(self.b, 7)
+                    }
+                    0xF9 => { // SET 7, C
+                        self.c = self.set(self.c, 7)
+                    }
+                    0xFA => { // SET 7, D
+                        self.d = self.set(self.d, 7)
+                    }
+                    0xFB => { // SET 7, E 
+                        self.e = self.set(self.e, 7)
+                    }
+                    0xFC => { // SET 7, H
+                        self.h = self.set(self.h, 7)
+                    }
+                    0xFD => { // SET 7, L
+                        self.l = self.set(self.l, 7)
+                    }
+                    0xFE => { // SET 7, (HL)
+                        let value: u8 = mem_map.get(self.get_hl_as_usize());
+                        let result: u8 = self.set(value, 7);
+                        mem_map.set(self.get_hl_as_usize(), result)
+                    }
+                    0xFF => { // SET 7, A
+                        self.a = self.set(self.a, 7)
+                    }
+                    _ => panic!("Instruction not implemented!"),
+                }
+            }
             _ => panic!("Instruction not implemented!"),
         }
     }
 
-    pub fn set_flag(&mut self, flag: Flag, value: bool) {
+    fn set_flag(&mut self, flag: Flag, value: bool) {
         match flag {
             Flag::Z => self.zf = value,
             Flag::N => self.nf = value,
@@ -943,7 +1807,7 @@ impl Cpu {
     // RR r8
     // RR [HL]
     // RRA
-    fn rr(&mut self, value: u8, is_rr: bool) -> u8 {
+    fn rr(&mut self, value: u8, is_rra: bool) -> u8 {
         let overflow: bool = (value & 1) == 1;
         let mut result: u8 = value.shr(1);
 
@@ -951,7 +1815,7 @@ impl Cpu {
             result = result | 0x80;
         }
 
-        self.set_flag(Flag::Z, !is_rr && result == 0);
+        self.set_flag(Flag::Z, !is_rra && result == 0);
         self.set_flag(Flag::N, false);
         self.set_flag(Flag::H, false);
         self.set_flag(Flag::C, overflow);
