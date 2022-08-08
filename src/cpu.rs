@@ -412,40 +412,20 @@ impl Cpu {
                 self.cp(value)
             }
             0xBF => self.cp(self.a), // CP A, A
-            0xC0 => {
-                panic!("Instruction not implemented! RET NZ")
-            }
-            0xC1 => {
-                panic!("Instruction not implemented! POP BC")
-            }
-            0xC2 => {
-                panic!("Instruction not implemented! JP NZ, u16")
-            }
-            0xC3 => {
-                panic!("Instruction not implemented! JP u16")
-            }
-            0xC4 => {
-                panic!("Instruction not implemented! CALL NZ, u16")
-            }
-            0xC5 => {
-                panic!("Instruction not implemented! PUSH BC")
-            }
+            0xC0 => panic!("Instruction not implemented! RET NZ"),
+            0xC1 => panic!("Instruction not implemented! POP BC"),
+            0xC2 => panic!("Instruction not implemented! JP NZ, u16"),
+            0xC3 => panic!("Instruction not implemented! JP u16"),
+            0xC4 => panic!("Instruction not implemented! CALL NZ, u16"),
+            0xC5 => panic!("Instruction not implemented! PUSH BC"),
             0xC6 => {
                 let value: u8 = mem_map.get(self.get_pc());
                 self.add_8(value)
             }
-            0xC7 => {
-                panic!("Instruction not implemented! RST 00h")
-            }
-            0xC8 => {
-                panic!("Instruction not implemented! RET Z")
-            }
-            0xC9 => {
-                panic!("Instruction not implemented! RET")
-            }
-            0xCA => {
-                panic!("Instruction not implemented! JP Z, u16")
-            }
+            0xC7 => panic!("Instruction not implemented! RST 00h"),
+            0xC8 => panic!("Instruction not implemented! RET Z"),
+            0xC9 => panic!("Instruction not implemented! RET"),
+            0xCA => panic!("Instruction not implemented! JP Z, u16"),
             0xCB => {
                 let opcode: u8 = mem_map.get(self.get_pc());
                 match opcode {
@@ -860,20 +840,85 @@ impl Cpu {
                     _ => panic!("Instruction not implemented!"),
                 }
             }
-            0xCC => {
-                panic!("Instruction not implemented! CALL Z, u16")
-            }
-            0xCD => {
-                panic!("Instruction not implemented! CALL u16")
-            }
+            0xCC => panic!("Instruction not implemented! CALL Z, u16"),
+            0xCD => panic!("Instruction not implemented! CALL u16"),
             0xCE => {
                 let value: u8 = mem_map.get(self.get_pc());
                 self.adc(value)
             }
-            0xCF => {
-                panic!("Instruction not implemented! RST 08h")
+            0xCF => panic!("Instruction not implemented! RST 08h"),
+            0xD0 => panic!("Instruction not implemented! RET NC"),
+            0xD1 => panic!("Instruction not implemented! POP DE"),
+            0xD2 => panic!("Instruction not implemented! JP NC, u16"),
+            0xD3 => panic!("No instruction exists for 0xD3"),
+            0xD4 => panic!("Instruction not implemented! CALL NC, u16"),
+            0xD5 => panic!("Instruction not implemented! PUSH DE"),
+            0xD6 => {
+                // SUB A, u8
+                let value: u8 = mem_map.get(self.get_pc());
+                self.sub(value)
             }
-            _ => panic!("Instruction not implemented!"),
+            0xD7 => panic!("Instruction not implemented! RST 10h"),
+            0xD8 => panic!("Instruction not implemented! RET C"),
+            0xD9 => panic!("Instruction not implemented! RETI"),
+            0xDA => panic!("Instruction not implemented! JP C, u16"),
+            0xDB => panic!("No instruction exists for 0xDB"),
+            0xDC => panic!("Instruction not implemented! CALL C, u16"),
+            0xDD => panic!("No instruction exists for 0xDD"),
+            0xDE => {
+                // SBC A, u8
+                let value: u8 = mem_map.get(self.get_pc());
+                self.sbc(value)
+            }
+            0xDF => panic!("Instruction not implemented! RST 18h"),
+            0xE0 => panic!("Instruction not implemented! LD (FF00+u8), A"),
+            0xE1 => panic!("Instruction not implemented! POP HL"),
+            0xE2 => panic!("Instruction not implemented! LD (FF00+C), A"),
+            0xE3 => panic!("No instruction exists for 0xE3"),
+            0xE4 => panic!("No instruction exists for 0xE4"),
+            0xE5 => panic!("Instruction not implemented! PUSH HL"),
+            0xE6 => {
+                // AND A, u8
+                let value: u8 = mem_map.get(self.get_pc());
+                self.and(value)
+            }
+            0xE7 => panic!("Instruction not implemented! RST 20h"),
+            0xE8 => panic!("Instruction not implemented! ADD SP, i8"),
+            0xE9 => panic!("Instruction not implemented! JP HL"),
+            0xEA => panic!("Instruction not implemented! LD (u16), A"),
+            0xEB => panic!("No instruction exists for 0xEB"),
+            0xEC => panic!("No instruction exists for 0xEC"),
+            0xED => panic!("No instruction exists for 0xED"),
+            0xEE => {
+                // XOR A, u8
+                let value: u8 = mem_map.get(self.get_pc());
+                self.xor(value)
+            }
+            0xEF => panic!("Instruction not implemented! RST 28h"),
+            0xF0 => panic!("Instruction not implemented! LD A, (FF00+u8)"),
+            0xF1 => panic!("Instruction not implemented! POP AF"),
+            0xF2 => panic!("Instruction not implemented! LD A, (FF00+C)"),
+            0xF3 => panic!("Instruction not implemented! DI"),
+            0xF4 => panic!("No instruction exists for 0xF4"),
+            0xF5 => panic!("Instruction not implemented! PUSH AF"),
+            0xF6 => {
+                // OR A, u8
+                let value: u8 = mem_map.get(self.get_pc());
+                self.or(value)
+            }
+            0xF7 => panic!("Instruction not implemented! RST 30h"),
+            0xF8 => panic!("Instruction not implemented! LD HL, SP + i8"),
+            0xF9 => panic!("Instruction not implemented! LD SP, HL"),
+            0xFA => panic!("Instruction not implemented! LD A, (u16)"),
+            0xFB => panic!("Instruction not implemented! EI"),
+            0xFC => panic!("No instruction exists for 0xFC"),
+            0xFD => panic!("No instruction exists for 0xFD"),
+            0xFE => {
+                // CP A, u8
+                let value: u8 = mem_map.get(self.get_pc());
+                self.cp(value)
+            }
+            0xFF => panic!("Instruction not implemented! RST 38h"),
         }
     }
 
