@@ -90,6 +90,17 @@ impl Cpu {
         }
     }
 
+    fn set_f(&mut self, value: u8) {
+        self.zf = (((value & 0b10000000) as u8) >> 7) != 0;
+        self.nf = (((value & 0b01000000) as u8) >> 6) != 0;
+        self.hf = (((value & 0b00100000) as u8) >> 5) != 0;
+        self.cf = (((value & 0b00010000) as u8) >> 4) != 0;
+    }
+
+    fn get_f(&mut self) -> u8 {
+        (self.zf as u8) << 7 | (self.nf as u8) << 6 | (self.hf as u8) << 5 | (self.cf as u8) << 4
+    }
+
     pub fn execute(&mut self, mut mem_map: MemoryMap) {
         let opcode: u8 = mem_map.get(self.get_pc());
         match opcode {
@@ -145,7 +156,7 @@ impl Cpu {
             0x15 => self.d = self.dec(self.d),                               // DEC D
             0x16 => self.d = mem_map.get(self.get_pc()),                     // LD D, u8
             0x17 => self.a = self.rl(self.a, true),                          // RLA
-            0x18 => self.jr(&mut mem_map), // JR i8R i8
+            0x18 => self.jr(&mut mem_map),                                   // JR i8R i8
             0x19 => self.add_hl(self.get_16_register(DE)),                   // ADD HL, DE
             0x1A => self.a = mem_map.get(self.get_16_register(DE) as usize), // LD A, (DE)
             0x1B => {
@@ -153,17 +164,17 @@ impl Cpu {
                 let value: u16 = self.dec_16(self.get_16_register(DE));
                 self.set_16_register(DE, value)
             }
-            0x1C => self.e = self.inc(self.e),                        // INC E
-            0x1D => self.e = self.dec(self.e),                        // DEC E
-            0x1E => self.e = mem_map.get(self.get_pc()),              // LD E, u8
-            0x1F => self.a = self.rr(self.a, true),                   // RRA
+            0x1C => self.e = self.inc(self.e),           // INC E
+            0x1D => self.e = self.dec(self.e),           // DEC E
+            0x1E => self.e = mem_map.get(self.get_pc()), // LD E, u8
+            0x1F => self.a = self.rr(self.a, true),      // RRA
             0x20 => {
                 // JR NZ, i8
                 let value: i8 = mem_map.get(self.get_pc()) as i8;
                 if !self.zf {
                     self.jr_cond(value)
                 }
-            },
+            }
             0x21 => {
                 // LD HL,u16
                 let value: u16 = self.get_pc_u16(&mut mem_map);
@@ -177,18 +188,18 @@ impl Cpu {
                 // INC HL
                 self.set_16_register(HL, self.inc_16(self.get_16_register(HL)))
             }
-            0x24 => self.h = self.inc(self.h),                       // INC H
-            0x25 => self.h = self.dec(self.h),                       // DEC H
-            0x26 => self.h = mem_map.get(self.get_pc()),             // LD H, u8
-            0x27 => panic!("Instruction not implemented! DAA"),      // DAA
+            0x24 => self.h = self.inc(self.h),                  // INC H
+            0x25 => self.h = self.dec(self.h),                  // DEC H
+            0x26 => self.h = mem_map.get(self.get_pc()),        // LD H, u8
+            0x27 => panic!("Instruction not implemented! DAA"), // DAA
             0x28 => {
                 // JR Z, i8
                 let value: i8 = mem_map.get(self.get_pc()) as i8;
                 if self.zf {
                     self.jr_cond(value)
                 }
-            },
-            0x29 => self.add_hl(self.get_16_register(HL)),           // ADD HL, HL
+            }
+            0x29 => self.add_hl(self.get_16_register(HL)), // ADD HL, HL
             0x2A => {
                 // LD A, (HL+)
                 self.a = mem_map.get((self.get_16_register(HL) + 1) as usize)
@@ -198,17 +209,17 @@ impl Cpu {
                 let value: u16 = self.dec_16(self.get_16_register(HL));
                 self.set_16_register(HL, value)
             }
-            0x2C => self.l = self.inc(self.l),                        // INC L
-            0x2D => self.l = self.dec(self.l),                        // DEC L
-            0x2E => self.l = mem_map.get(self.get_pc()),              // LD L, u8
-            0x2F => panic!("Instruction not implemented! CPL"),       // CPL
+            0x2C => self.l = self.inc(self.l),           // INC L
+            0x2D => self.l = self.dec(self.l),           // DEC L
+            0x2E => self.l = mem_map.get(self.get_pc()), // LD L, u8
+            0x2F => self.cpl(),                          // CPL
             0x30 => {
                 // JR NC, i8
                 let value: i8 = mem_map.get(self.get_pc()) as i8;
                 if !self.cf {
                     self.jr_cond(value)
                 }
-            },
+            }
             0x31 => self.sp = self.get_pc_u16(&mut mem_map) as usize, // LD SP,u16
             0x32 => {
                 // LD (HL-),A
@@ -230,15 +241,15 @@ impl Cpu {
                 let value: u8 = mem_map.get(self.get_pc());
                 mem_map.set(self.get_hl_as_usize(), value)
             }
-            0x37 => panic!("Instruction not implemented! SCF"), // SCF
+            0x37 => self.scf(), // SCF
             0x38 => {
                 // JR C, i8
                 let value: i8 = mem_map.get(self.get_pc()) as i8;
                 if self.cf {
                     self.jr_cond(value)
                 }
-            },
-            0x39 => self.add_hl(self.sp as u16),                // ADD HL, SP
+            }
+            0x39 => self.add_hl(self.sp as u16), // ADD HL, SP
             0x3A => {
                 // LD A, (HL-)
                 self.a = mem_map.get((self.get_16_register(HL) - 1) as usize)
@@ -251,7 +262,7 @@ impl Cpu {
             0x3C => self.a = self.inc(self.a),                    // INC A
             0x3D => self.a = self.dec(self.a),                    // DEC A
             0x3E => self.a = mem_map.get(self.get_pc()),          // LD A, u8
-            0x3F => panic!("Instruction not implemented! CCF"),   // CCF
+            0x3F => self.ccf(),                                   // CCF
             0x40 => self.b = self.b,                              // LD B, B (TODO: NOOP Instead??)
             0x41 => self.b = self.c,                              // LD B, C
             0x42 => self.b = self.d,                              // LD B, D
@@ -412,20 +423,45 @@ impl Cpu {
                 self.cp(value)
             }
             0xBF => self.cp(self.a), // CP A, A
-            0xC0 => panic!("Instruction not implemented! RET NZ"),
-            0xC1 => panic!("Instruction not implemented! POP BC"),
-            0xC2 => panic!("Instruction not implemented! JP NZ, u16"),
-            0xC3 => panic!("Instruction not implemented! JP u16"),
+            0xC0 => {
+                // RET NZ
+                if !self.nf {
+                    self.pop_pc(&mut mem_map)
+                }
+            },
+            0xC1 => self.pop(&mut mem_map, BC), // POP BC
+            0xC2 => {
+                // JP NZ, u16
+                let updated_pc: usize = self.get_pc_u16(&mut mem_map) as usize;
+                if !self.zf {
+                    self.pc = updated_pc
+                }
+            }
+            0xC3 => {
+                // JP u16
+                self.pc = self.get_pc_u16(&mut mem_map) as usize
+            }
             0xC4 => panic!("Instruction not implemented! CALL NZ, u16"),
-            0xC5 => panic!("Instruction not implemented! PUSH BC"),
+            0xC5 => self.push(&mut mem_map, BC), // PUSH BC
             0xC6 => {
                 let value: u8 = mem_map.get(self.get_pc());
                 self.add_8(value)
             }
             0xC7 => panic!("Instruction not implemented! RST 00h"),
-            0xC8 => panic!("Instruction not implemented! RET Z"),
-            0xC9 => panic!("Instruction not implemented! RET"),
-            0xCA => panic!("Instruction not implemented! JP Z, u16"),
+            0xC8 => {
+                // RET Z
+                if self.zf {
+                    self.pop_pc(&mut mem_map)
+                }
+            }
+            0xC9 => self.pop_pc(&mut mem_map), // RET
+            0xCA => {
+                // JP Z, u16
+                let updated_pc: usize = self.get_pc_u16(&mut mem_map) as usize;
+                if self.zf {
+                    self.pc = updated_pc
+                }
+            }
             0xCB => {
                 let opcode: u8 = mem_map.get(self.get_pc());
                 match opcode {
@@ -481,12 +517,12 @@ impl Cpu {
                         mem_map.set(self.get_hl_as_usize(), result)
                     }
                     0x1F => self.a = self.rr(self.a, false), // RR A
-                    0x20 => self.b = self.sla(self.b), // SLA B
-                    0x21 => self.c = self.sla(self.c), // SLA C
-                    0x22 => self.d = self.sla(self.d), // SLA D
-                    0x23 => self.e = self.sla(self.e), // SLA E
-                    0x24 => self.h = self.sla(self.h), // SLA H
-                    0x25 => self.l = self.sla(self.l), // SLA L
+                    0x20 => self.b = self.sla(self.b),       // SLA B
+                    0x21 => self.c = self.sla(self.c),       // SLA C
+                    0x22 => self.d = self.sla(self.d),       // SLA D
+                    0x23 => self.e = self.sla(self.e),       // SLA E
+                    0x24 => self.h = self.sla(self.h),       // SLA H
+                    0x25 => self.l = self.sla(self.l),       // SLA L
                     0x26 => {
                         // SLA (HL)
                         let value: u8 = mem_map.get(self.get_hl_as_usize());
@@ -506,7 +542,7 @@ impl Cpu {
                         let result: u8 = self.sra(value);
                         mem_map.set(self.get_hl_as_usize(), result)
                     }
-                    0x2F => self.a = self.sra(self.a), // SRA A
+                    0x2F => self.a = self.sra(self.a),  // SRA A
                     0x30 => self.b = self.swap(self.b), // SWAP B
                     0x31 => self.c = self.swap(self.c), // SWAP C
                     0x32 => self.d = self.swap(self.d), // SWAP D
@@ -520,12 +556,12 @@ impl Cpu {
                         mem_map.set(self.get_hl_as_usize(), result)
                     }
                     0x37 => self.a = self.swap(self.a), // SWAP A
-                    0x38 => self.b = self.srl(self.b), // SRL B
-                    0x39 => self.c = self.srl(self.c), // SRL C
-                    0x3A => self.d = self.srl(self.d), // SRL D
-                    0x3B => self.e = self.srl(self.e), // SRL E
-                    0x3C => self.h = self.srl(self.h), // SRL H
-                    0x3D => self.l = self.srl(self.l), // SRL L
+                    0x38 => self.b = self.srl(self.b),  // SRL B
+                    0x39 => self.c = self.srl(self.c),  // SRL C
+                    0x3A => self.d = self.srl(self.d),  // SRL D
+                    0x3B => self.e = self.srl(self.e),  // SRL E
+                    0x3C => self.h = self.srl(self.h),  // SRL H
+                    0x3D => self.l = self.srl(self.l),  // SRL L
                     0x3E => {
                         // SRL (HL)
                         let value: u8 = mem_map.get(self.get_hl_as_usize());
@@ -533,12 +569,12 @@ impl Cpu {
                         mem_map.set(self.get_hl_as_usize(), result)
                     }
                     0x3F => self.a = self.srl(self.a), // SRL A
-                    0x40 => self.bit(self.b, 0), // BIT 0, B
-                    0x41 => self.bit(self.c, 0), // BIT 0, C
-                    0x42 => self.bit(self.d, 0), // BIT 0, D
-                    0x43 => self.bit(self.e, 0), // BIT 0, E
-                    0x44 => self.bit(self.h, 0), // BIT 0, H
-                    0x45 => self.bit(self.l, 0), // BIT 0, L
+                    0x40 => self.bit(self.b, 0),       // BIT 0, B
+                    0x41 => self.bit(self.c, 0),       // BIT 0, C
+                    0x42 => self.bit(self.d, 0),       // BIT 0, D
+                    0x43 => self.bit(self.e, 0),       // BIT 0, E
+                    0x44 => self.bit(self.h, 0),       // BIT 0, H
+                    0x45 => self.bit(self.l, 0),       // BIT 0, L
                     0x46 => {
                         // BIT 0, (HL)
                         let value: u8 = mem_map.get(self.get_hl_as_usize());
@@ -628,7 +664,7 @@ impl Cpu {
                         let value: u8 = mem_map.get(self.get_hl_as_usize());
                         self.bit(value, 7)
                     }
-                    0x7F => self.bit(self.a, 7), // BIT 7, A
+                    0x7F => self.bit(self.a, 7),          // BIT 7, A
                     0x80 => self.b = self.res(self.b, 0), // RES 0, B
                     0x81 => self.c = self.res(self.c, 0), // RES 0, C
                     0x82 => self.d = self.res(self.d, 0), // RES 0, D
@@ -841,27 +877,55 @@ impl Cpu {
                 }
             }
             0xCC => panic!("Instruction not implemented! CALL Z, u16"),
-            0xCD => panic!("Instruction not implemented! CALL u16"),
+            0xCD => {
+                // CALL u16
+                let lower: u8 = mem_map.get(self.get_pc());
+                let upper: u8 = mem_map.get(self.get_pc());
+                mem_map.set(self.get_sp_dec(), lower);
+                mem_map.set(self.get_sp_dec(), upper);
+            }
             0xCE => {
                 let value: u8 = mem_map.get(self.get_pc());
                 self.adc(value)
             }
             0xCF => panic!("Instruction not implemented! RST 08h"),
-            0xD0 => panic!("Instruction not implemented! RET NC"),
-            0xD1 => panic!("Instruction not implemented! POP DE"),
-            0xD2 => panic!("Instruction not implemented! JP NC, u16"),
+            0xD0 => {
+                // RET NC
+                if !self.cf {
+                    self.pop_pc(&mut mem_map)
+                }
+            }
+            0xD1 => self.pop(&mut mem_map, DE), // POP DE
+            0xD2 => {
+                // JP NC, u16
+                let updated_pc: usize = self.get_pc_u16(&mut mem_map) as usize;
+                if !self.cf {
+                    self.pc = updated_pc
+                }
+            }
             0xD3 => panic!("No instruction exists for 0xD3"),
             0xD4 => panic!("Instruction not implemented! CALL NC, u16"),
-            0xD5 => panic!("Instruction not implemented! PUSH DE"),
+            0xD5 => self.push(&mut mem_map, DE), // PUSH DE
             0xD6 => {
                 // SUB A, u8
                 let value: u8 = mem_map.get(self.get_pc());
                 self.sub(value)
             }
             0xD7 => panic!("Instruction not implemented! RST 10h"),
-            0xD8 => panic!("Instruction not implemented! RET C"),
+            0xD8 => {
+                // RET C
+                if self.cf {
+                    self.pop_pc(&mut mem_map)
+                }
+            }
             0xD9 => panic!("Instruction not implemented! RETI"),
-            0xDA => panic!("Instruction not implemented! JP C, u16"),
+            0xDA => {
+                // JP C, u16
+                let updated_pc: usize = self.get_pc_u16(&mut mem_map) as usize;
+                if self.cf {
+                    self.pc = updated_pc
+                }
+            }
             0xDB => panic!("No instruction exists for 0xDB"),
             0xDC => panic!("Instruction not implemented! CALL C, u16"),
             0xDD => panic!("No instruction exists for 0xDD"),
@@ -872,11 +936,11 @@ impl Cpu {
             }
             0xDF => panic!("Instruction not implemented! RST 18h"),
             0xE0 => panic!("Instruction not implemented! LD (FF00+u8), A"),
-            0xE1 => panic!("Instruction not implemented! POP HL"),
+            0xE1 => self.pop(&mut mem_map, HL), // POP HL
             0xE2 => panic!("Instruction not implemented! LD (FF00+C), A"),
             0xE3 => panic!("No instruction exists for 0xE3"),
             0xE4 => panic!("No instruction exists for 0xE4"),
-            0xE5 => panic!("Instruction not implemented! PUSH HL"),
+            0xE5 => self.push(&mut mem_map, HL), // PUSH HL
             0xE6 => {
                 // AND A, u8
                 let value: u8 = mem_map.get(self.get_pc());
@@ -884,7 +948,7 @@ impl Cpu {
             }
             0xE7 => panic!("Instruction not implemented! RST 20h"),
             0xE8 => panic!("Instruction not implemented! ADD SP, i8"),
-            0xE9 => panic!("Instruction not implemented! JP HL"),
+            0xE9 => self.pc = self.get_16_register(HL) as usize, // JP HL
             0xEA => panic!("Instruction not implemented! LD (u16), A"),
             0xEB => panic!("No instruction exists for 0xEB"),
             0xEC => panic!("No instruction exists for 0xEC"),
@@ -896,11 +960,11 @@ impl Cpu {
             }
             0xEF => panic!("Instruction not implemented! RST 28h"),
             0xF0 => panic!("Instruction not implemented! LD A, (FF00+u8)"),
-            0xF1 => panic!("Instruction not implemented! POP AF"),
+            0xF1 => self.pop(&mut mem_map, AF), // POP AF
             0xF2 => panic!("Instruction not implemented! LD A, (FF00+C)"),
             0xF3 => panic!("Instruction not implemented! DI"),
             0xF4 => panic!("No instruction exists for 0xF4"),
-            0xF5 => panic!("Instruction not implemented! PUSH AF"),
+            0xF5 => self.push(&mut mem_map, AF), // PUSH AF
             0xF6 => {
                 // OR A, u8
                 let value: u8 = mem_map.get(self.get_pc());
@@ -946,6 +1010,18 @@ impl Cpu {
 
     fn get_hl_as_usize(&mut self) -> usize {
         self.get_16_register(HL) as usize
+    }
+
+    fn get_sp_inc(&mut self) -> usize {
+        let original: usize = self.sp;
+        self.sp = self.sp + 1;
+        original
+    }
+
+    fn get_sp_dec(&mut self) -> usize {
+        let original: usize = self.sp;
+        self.sp = self.sp - 1;
+        original
     }
 
     ////////////////////////////////////////////////////////////
@@ -1270,6 +1346,78 @@ impl Cpu {
     // JR cc, i8
     fn jr_cond(&mut self, value: i8) {
         self.pc = ((self.pc as i16) + (value as i16)) as usize
+    }
+
+    // CPL
+    fn cpl(&mut self) {
+        self.a = !self.a;
+    }
+
+    // SCF
+    fn scf(&mut self) {
+        self.set_flag(N, false);
+        self.set_flag(H, false);
+        self.set_flag(C, true);
+    }
+
+    // CCF
+    fn ccf(&mut self) {
+        self.set_flag(N, false);
+        self.set_flag(H, false);
+        self.set_flag(C, !self.cf);
+    }
+
+    fn pop(&mut self, mem_map: &mut MemoryMap, register: Register) {
+        let lower: u8 = mem_map.get(self.get_sp_inc());
+        let upper: u8 = mem_map.get(self.get_sp_inc());
+        match register {
+            AF => {
+                self.a = upper;
+                self.set_f(lower);
+            }
+            BC => {
+                self.b = upper;
+                self.c = lower;
+            }
+            DE => {
+                self.d = upper;
+                self.e = lower;
+            }
+            HL => {
+                self.h = upper;
+                self.l = lower;
+            }
+        }
+    }
+
+    fn pop_pc(&mut self, mem_map: &mut MemoryMap) {
+        let lower: u8 = mem_map.get(self.get_sp_inc());
+        let upper: u8 = mem_map.get(self.get_sp_inc());
+
+        self.pc = (((upper as u16) << 8) + (lower as u16)) as usize
+    }
+
+    fn push(&mut self, mem_map: &mut MemoryMap, register: Register) {
+        let upper_address: usize = self.get_sp_dec();
+        let lower_address: usize = self.get_sp_dec();
+        match register {
+            AF => {
+                mem_map.set(upper_address, self.a);
+                mem_map.set(lower_address, self.get_f());
+            }
+            BC => {
+                mem_map.set(upper_address, self.b);
+                mem_map.set(lower_address, self.c);
+            }
+            DE => {
+                mem_map.set(upper_address, self.d);
+                mem_map.set(lower_address, self.e);
+            }
+            HL => {
+                mem_map.set(upper_address, self.h);
+                mem_map.set(lower_address, self.l);
+            }
+        }
     }
 }
 
